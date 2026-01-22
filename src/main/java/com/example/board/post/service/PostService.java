@@ -1,5 +1,6 @@
 package com.example.board.post.service;
 
+import com.example.board.comment.repository.CommentRepository;
 import com.example.board.post.dto.PostRequestDto;
 import com.example.board.post.dto.PostResponseDto;
 import com.example.board.post.entity.Post;
@@ -15,6 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PostService {
     private final PostRepository postRepository;
+    private final CommentRepository commentRepository;
 
     @Transactional
     public PostResponseDto savePost(PostRequestDto dto) {
@@ -56,6 +58,7 @@ public class PostService {
 
     @Transactional
     public void deletePost(Long postId) {
+        commentRepository.deleteByPostId(postId);
         postRepository.deleteById(postId);
     }
 }
