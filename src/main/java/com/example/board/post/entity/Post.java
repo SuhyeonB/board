@@ -1,5 +1,6 @@
 package com.example.board.post.entity;
 
+import com.example.board.user.entity.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,6 +17,8 @@ public class Post {
 
     private String title;
     private String contents;
+
+    //private User user;
 
     public Post(String title, String contents) {
         this.title = title;
