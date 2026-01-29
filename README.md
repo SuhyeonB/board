@@ -3,7 +3,6 @@ SNS-like Board (Spring Boot)
 
 ## Purpose
 - Spring 학습
-- 취업용 포트폴리오
 
 ## Stage
 - Stage 1: MVP Board (in progress)
