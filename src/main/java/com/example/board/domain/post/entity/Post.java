@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Entity
 @NoArgsConstructor
 @Getter
@@ -26,6 +28,9 @@ public class Post {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
 
     @Builder
     public Post(String title, String contents, User user) {
@@ -37,5 +42,13 @@ public class Post {
     public void update(String title, String contents) {
         this.title = title;
         this.contents = contents;
+    }
+
+    public void delete() {
+        this.deletedAt = LocalDateTime.now();
+    }
+
+    public boolean isDeleted() {
+        return this.deletedAt != null;
     }
 }

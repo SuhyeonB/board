@@ -51,8 +51,14 @@ public class PostService {
         List<PostResponseDto> dtos = new ArrayList<>();
 
         for (Post post : posts) {
-            // post.getUser().getNickname() 때문에 N+1
-            dtos.add(new PostResponseDto(post.getId(), post.getTitle(), post.getContents(), post.getUser().getNickname()));
+            if (!post.isDeleted()) {
+                dtos.add(new PostResponseDto(
+                        post.getId(),
+                        post.getTitle(),
+                        post.getContents(),
+                        post.getUser().getNickname())); // post.getUser().getNickname() 때문에 N+1
+            }
+
         }
 
         return dtos;
@@ -63,6 +69,9 @@ public class PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new DomainException(ErrorCode.POST_NOT_FOUND, "존재하지 않는 포스트입니다."));
 
+        if (post.isDeleted()) {
+            throw new DomainException(ErrorCode.POST_NOT_FOUND, "이미 삭제된 포스트입니다.");
+        }
         return new PostResponseDto(post.getId(), post.getTitle(), post.getContents(),  post.getUser().getNickname());
     }
 
@@ -77,6 +86,10 @@ public class PostService {
 
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new DomainException(ErrorCode.POST_NOT_FOUND, "존재하지 않는 포스트입니다."));
+
+        if (post.isDeleted()) {
+            throw new DomainException(ErrorCode.POST_NOT_FOUND, "이미 삭제된 포스트입니다.");
+        }
 
         if (!post.getUser().getId().equals(userId)) {
             throw new DomainException(ErrorCode.FORBIDDEN, "잘못된 접근입니다.");
@@ -99,11 +112,15 @@ public class PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new DomainException(ErrorCode.POST_NOT_FOUND, "존재하지 않는 포스트입니다."));
 
+        if  (post.isDeleted()) {
+            throw new DomainException(ErrorCode.POST_NOT_FOUND, "이미 삭제된 포스트입니다.");
+        }
+
         if (!post.getUser().getId().equals(userId)) {
             throw new DomainException(ErrorCode.FORBIDDEN, "잘못된 접근입니다.");
         }
 
-        commentRepository.deleteByPostId(postId);
-        postRepository.deleteById(postId);
+        // 하위 Comments 지우기
+        post.delete();
     }
 }

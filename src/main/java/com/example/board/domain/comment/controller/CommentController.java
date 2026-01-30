@@ -3,8 +3,10 @@ package com.example.board.domain.comment.controller;
 import com.example.board.domain.comment.dto.CommentRequestDto;
 import com.example.board.domain.comment.dto.CommentResponseDto;
 import com.example.board.domain.comment.service.CommentService;
+import com.example.board.global.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,9 +19,10 @@ public class CommentController {
     @PostMapping("/posts/{postId}/comments")
     public ResponseEntity<CommentResponseDto> createComment(
             @PathVariable Long postId,
+            @AuthenticationPrincipal CustomUserDetails user,
             @RequestBody CommentRequestDto dto
     ){
-        return ResponseEntity.ok(commentService.saveComment(postId, dto));
+        return ResponseEntity.ok(commentService.saveComment(postId, user.getUserId() ,dto));
     }
 
     @GetMapping("/posts/{postId}/comments")
@@ -34,10 +37,11 @@ public class CommentController {
 
     @PutMapping("/{commentId}")
     public ResponseEntity<CommentResponseDto> updateComment(
+            @AuthenticationPrincipal CustomUserDetails user,
             @PathVariable Long commentId,
             @RequestBody CommentRequestDto dto
     ){
-        return ResponseEntity.ok(commentService.updateComment(commentId, dto));
+        return ResponseEntity.ok(commentService.updateComment(user.getUserId(), commentId, dto));
     }
 
     @DeleteMapping("/{commentId}")
