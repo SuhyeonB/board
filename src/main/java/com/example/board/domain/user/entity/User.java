@@ -2,6 +2,7 @@ package com.example.board.domain.user.entity;
 
 import com.example.board.global.common.entity.Timestamped;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
