@@ -123,4 +123,23 @@ public class PostService {
         // 하위 Comments 지우기
         post.delete();
     }
+
+    @Transactional(readOnly = true)
+    public List<PostResponseDto> findAllPostsByUserId(Long userId) {
+        List<Post> posts = postRepository.findByUserId(userId);
+        List<PostResponseDto> dtos = new ArrayList<>();
+
+        for (Post post : posts) {
+            if (!post.isDeleted()) {
+                dtos.add(new PostResponseDto(
+                        post.getId(),
+                        post.getTitle(),
+                        post.getContents(),
+                        post.getUser().getNickname())); // post.getUser().getNickname() 때문에 N+1
+            }
+
+        }
+
+        return dtos;
+    }
 }

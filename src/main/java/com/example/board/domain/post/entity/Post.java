@@ -1,6 +1,7 @@
 package com.example.board.domain.post.entity;
 
 import com.example.board.domain.user.entity.User;
+import com.example.board.global.common.entity.Timestamped;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
@@ -12,7 +13,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Getter
 @Table(name = "posts")
-public class Post {
+public class Post extends Timestamped {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

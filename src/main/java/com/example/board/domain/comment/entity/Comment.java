@@ -2,6 +2,7 @@ package com.example.board.domain.comment.entity;
 
 import com.example.board.domain.post.entity.Post;
 import com.example.board.domain.user.entity.User;
+import com.example.board.global.common.entity.Timestamped;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
@@ -11,7 +12,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "comments")
 @NoArgsConstructor
 @Getter
-public class Comment {
+public class Comment extends Timestamped {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
