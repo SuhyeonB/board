@@ -10,6 +10,8 @@ import com.example.board.domain.user.repository.UserRepository;
 import com.example.board.global.exception.DomainException;
 import com.example.board.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,22 +48,12 @@ public class PostService {
 
     // N+1 문제 발생
     @Transactional(readOnly = true)
-    public List<PostResponseDto> findAllPosts() {
-        List<Post> posts = postRepository.findAll();
-        List<PostResponseDto> dtos = new ArrayList<>();
+    public Page<PostResponseDto> findAllPosts(Pageable pageable) {
+        Page<Post> posts = postRepository.findByDeletedAtIsNull(pageable);
 
-        for (Post post : posts) {
-            if (!post.isDeleted()) {
-                dtos.add(new PostResponseDto(
-                        post.getId(),
-                        post.getTitle(),
-                        post.getContents(),
-                        post.getUser().getNickname())); // post.getUser().getNickname() 때문에 N+1
-            }
-
-        }
-
-        return dtos;
+        return posts.map(post -> new PostResponseDto(
+                post.getId(), post.getTitle(), post.getContents(), post.getUser().getNickname()
+        ));
     }
 
     @Transactional(readOnly = true)
@@ -125,21 +117,14 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    public List<PostResponseDto> findAllPostsByUserId(Long userId) {
-        List<Post> posts = postRepository.findByUserId(userId);
-        List<PostResponseDto> dtos = new ArrayList<>();
+    public Page<PostResponseDto> findAllPostsByUserId(Pageable pageable, Long userId) {
+        Page<Post> posts = postRepository.findByUserIdAndDeletedAtIsNull(pageable, userId);
 
-        for (Post post : posts) {
-            if (!post.isDeleted()) {
-                dtos.add(new PostResponseDto(
-                        post.getId(),
-                        post.getTitle(),
-                        post.getContents(),
-                        post.getUser().getNickname())); // post.getUser().getNickname() 때문에 N+1
-            }
-
-        }
-
-        return dtos;
+        return posts.map(post -> new PostResponseDto(
+                post.getId(),
+                post.getTitle(),
+                post.getContents(),
+                post.getUser().getNickname()
+        ));
     }
 }

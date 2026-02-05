@@ -11,7 +11,10 @@ import com.example.board.global.exception.DomainException;
 import com.example.board.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -52,20 +55,20 @@ public class BookmarkService {
         bookmarkRepository.deleteByUserIdAndPostId(userId, postId);
     }
 
-    public List<PostResponseDto> findBookmarkedPostsByUserId(Long userId) {
-        List<Bookmark> bookmarks = bookmarkRepository.findBookmarkedPostsByUserId(userId);
+    @Transactional(readOnly = true)
+    public Page<PostResponseDto> findBookmarkedPostsByUserId(Long userId, Pageable pageable) {
+        Page<Bookmark> bookmarks = bookmarkRepository.findBookmarkedPostsByUserId(userId, pageable);
 
-        return bookmarks.stream()
-                .map(
-                        b -> {
-                            Post post = b.getPost();
-                            return new PostResponseDto(
-                                    post.getId(),
-                                    post.getTitle(),
-                                    post.getContents(),
-                                    post.getUser().getNickname()
-                            );
-                        }
-                ).toList();
+        return bookmarks.map(
+                bookmark -> {
+                    Post post = bookmark.getPost();
+                    return new PostResponseDto(
+                            post.getId(),
+                            post.getTitle(),
+                            post.getContents(),
+                            post.getUser().getNickname()
+                    );
+                }
+        );
     }
 }
