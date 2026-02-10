@@ -1,6 +1,7 @@
 package com.example.board.domain.post.service;
 
 import com.example.board.domain.comment.repository.CommentRepository;
+import com.example.board.domain.like.repository.LikeRepository;
 import com.example.board.domain.post.dto.PostRequestDto;
 import com.example.board.domain.post.dto.PostResponseDto;
 import com.example.board.domain.post.entity.Post;
@@ -17,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +28,7 @@ public class PostService {
     private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
+    private final LikeRepository likeRepository;
 
     @Transactional
     public PostResponseDto savePost(Long id, PostRequestDto dto) {
@@ -43,28 +47,65 @@ public class PostService {
 
         postRepository.save(post);
 
-        return new PostResponseDto(post.getId(), post.getTitle(), post.getContents(), post.getUser().getNickname());
+        return new PostResponseDto(post.getId(), post.getTitle(), post.getContents(), post.getUser().getNickname(), post.getCreatedAt(), 0L, 0L);
     }
 
-    // N+1 문제 발생
     @Transactional(readOnly = true)
     public Page<PostResponseDto> findAllPosts(Pageable pageable) {
-        Page<Post> posts = postRepository.findByDeletedAtIsNull(pageable);
+        Page<PostResponseDto> posts = postRepository.findPostDtosByDeletedAtIsNull(pageable);
 
-        return posts.map(post -> new PostResponseDto(
-                post.getId(), post.getTitle(), post.getContents(), post.getUser().getNickname()
+        List<Long> postIds = posts.stream()
+                .map(PostResponseDto::id)
+                .toList();
+
+        if(postIds.isEmpty()) { return posts; }
+
+        // 댓글 수
+        Map<Long, Long> commentCountMap =
+                commentRepository.countCommentsByPostIds(postIds)
+                        .stream()
+                        .collect(Collectors.toMap(
+                                row -> (Long) row[0],
+                                row -> (Long) row[1]
+                        ));
+
+        // 좋아요 수
+        Map<Long, Long> likeCountMap =
+                likeRepository.countLikesByPostIds(postIds)
+                        .stream()
+                        .collect(Collectors.toMap(
+                                row -> (Long) row[0],
+                                row -> (Long) row[1]
+                        ));
+
+        return posts.map(dto -> new PostResponseDto(
+                dto.id(),
+                dto.title(),
+                dto.contents(),
+                dto.author(),
+                dto.createdAt(),
+                commentCountMap.getOrDefault(dto.id(), 0L),
+                likeCountMap.getOrDefault(dto.id(), 0L)
         ));
     }
 
     @Transactional(readOnly = true)
     public PostResponseDto findByPostId(Long postId) {
-        Post post = postRepository.findById(postId)
+        PostResponseDto dto = postRepository.findPostDtoById(postId)
                 .orElseThrow(() -> new DomainException(ErrorCode.POST_NOT_FOUND, "존재하지 않는 포스트입니다."));
 
-        if (post.isDeleted()) {
-            throw new DomainException(ErrorCode.POST_NOT_FOUND, "이미 삭제된 포스트입니다.");
-        }
-        return new PostResponseDto(post.getId(), post.getTitle(), post.getContents(),  post.getUser().getNickname());
+        long commentCount = commentRepository.countByPostIdAndDeletedAtIsNull(postId);
+        long likeCount = likeRepository.countByPostId(postId);
+
+        return new PostResponseDto(
+                dto.id(),
+                dto.title(),
+                dto.contents(),
+                dto.author(),
+                dto.createdAt(),
+                commentCount,
+                likeCount
+        );
     }
 
     @Transactional
@@ -89,7 +130,7 @@ public class PostService {
 
         post.update(dto.getTitle(), dto.getContents());
 
-        return new  PostResponseDto(post.getId(), post.getTitle(), post.getContents(),  post.getUser().getNickname());
+        return new  PostResponseDto(post.getId(), post.getTitle(), post.getContents(),  post.getUser().getNickname(), post.getCreatedAt(), 0L, 0L);
     }
 
     @Transactional
@@ -118,13 +159,6 @@ public class PostService {
 
     @Transactional(readOnly = true)
     public Page<PostResponseDto> findAllPostsByUserId(Pageable pageable, Long userId) {
-        Page<Post> posts = postRepository.findByUserIdAndDeletedAtIsNull(pageable, userId);
-
-        return posts.map(post -> new PostResponseDto(
-                post.getId(),
-                post.getTitle(),
-                post.getContents(),
-                post.getUser().getNickname()
-        ));
+        return postRepository.findPostDtosByUserId(userId, pageable);
     }
 }

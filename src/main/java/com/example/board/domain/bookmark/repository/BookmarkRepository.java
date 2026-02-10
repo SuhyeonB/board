@@ -1,6 +1,7 @@
 package com.example.board.domain.bookmark.repository;
 
 import com.example.board.domain.bookmark.entity.Bookmark;
+import com.example.board.domain.post.dto.PostResponseDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,12 +16,23 @@ public interface BookmarkRepository extends JpaRepository<Bookmark, Long> {
     void deleteByUserIdAndPostId(Long userId, Long postId);
 
     @Query("""
-        select b
+        select new com.example.board.domain.post.dto.PostResponseDto(
+            p.id,
+            p.title,
+            p.contents,
+            u.nickname,
+            p.createdAt,
+            0L,
+            0L
+        )
         from Bookmark b
-        join fetch b.post p
-        join fetch p.user
+        join b.post p
+        join p.user u
         where b.user.id = :userId
           and p.deletedAt is null
     """)
-    Page<Bookmark> findBookmarkedPostsByUserId(@Param("userId") Long userId, Pageable pageable);
+    Page<PostResponseDto> findBookmarkedPostDtosByUserId(
+            @Param("userId") Long userId,
+            Pageable pageable
+    );
 }
