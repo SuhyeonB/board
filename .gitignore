@@ -38,3 +38,6 @@ out/
 
 ### resources ###
 application.yml
+
+### etc ###
+/uploads

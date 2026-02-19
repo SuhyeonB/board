@@ -29,6 +29,7 @@ public class PostService {
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
     private final LikeRepository likeRepository;
+    private final PostMediaService  postMediaService;
 
     @Transactional
     public PostResponseDto savePost(Long id, PostRequestDto dto) {
@@ -46,6 +47,7 @@ public class PostService {
                 .build();
 
         postRepository.save(post);
+        postMediaService.sync(post, dto.getContents());
 
         return new PostResponseDto(post.getId(), post.getTitle(), post.getContents(), post.getUser().getNickname(), post.getCreatedAt(), 0L, 0L);
     }
@@ -129,6 +131,7 @@ public class PostService {
         }
 
         post.update(dto.getTitle(), dto.getContents());
+        postMediaService.sync(post, dto.getContents());
 
         return new  PostResponseDto(post.getId(), post.getTitle(), post.getContents(),  post.getUser().getNickname(), post.getCreatedAt(), 0L, 0L);
     }
